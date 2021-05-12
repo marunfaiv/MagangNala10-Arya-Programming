@@ -15,108 +15,81 @@ bool compareContourAreas(vector<Point> contour1, vector<Point> contour2){
 
 int main(){
 
-    int hmin1,smin1,vmin1,hmax1,smax1,vmax1;
-    int hmin2,smin2,vmin2,hmax2,smax2,vmax2;
-    int dilSize = 0, erodSize = 0;
-    int dilVal1,dilVal2,erodVal1,erodVal2;
-    int maxDil = 255, maxErod = 255;
-    float x = 640.0/2.0;
-    float y = 480.0/2.0;
-    float error = 0;
+    int hmin, smin, vmin, dilSize, erodSize, max_value1, max_value2, max_value3;
+    int hmin_purp, smin_purp, vmin_purp;
+    int hmax_purp, smax_purp, vmax_purp;
+    hmin = 0; smin = 0; vmin = 0;
+    max_value1 = 180;
+    max_value2 = 255;
+    max_value3 = 10;
+    dilSize = 0;
+    erodSize = 0;
+    float x, y, error;
+    x = 640.0/2.0;
+    y = 480.0/2.0;
+    error = 0;
 
     VideoCapture cap(-1);
-    Mat img,frame,imgHSV,imgHSV2, imgtrack, imgCanny, imgDil, mask,mask2,imgErode;
-    string windowname, videoname1, videoname2, videoname3, videoname4;
-    windowname = "Camera 1";
-    videoname1 = "Red Mask";
-    videoname2 = "Green Mask";
-    videoname3 = "Dilated";
-    videoname4 = "Eroded";
+    Mat img, imgHSV, imgDil, imgErode, mask;
+    string mainwindow, window2,window3,window4;
+    mainwindow = "Main Camera";
+    window2 = "Masked";
+    window3 = "Eroded";
+    window4 = "Dilated";
 
-    //WARNA MERAH
-    hmin1 = 0; smin1 = 0; vmin1 = 0;
-    hmax1 = 180; smax1 = 255; vmax1 = 255;
-    //WARNA HIJAU
-    hmin2 = 0; smin2 = 0; vmin2 = 0;
-    hmax2 = 180; smax2 = 255; vmax2 = 255;
-
-    namedWindow(windowname);
-    createTrackbar("Hue min merah", windowname, &hmin1, hmax1);
-    createTrackbar("Sat min merah", windowname, &smin1, smax1);
-    createTrackbar("Val min merah", windowname, &vmin1, vmax1);
-    createTrackbar("Erode value", windowname, &erodSize, maxErod);
-    createTrackbar("Dilate value", windowname, &dilSize, maxDil);
-
-
-        /*if(erodSize == 0 && dilSize == 0){
-             erodVal1 = 1; erodVal2 = 1;
-             dilVal1 = 1; dilVal2 = 1;
-            Mat kernel = getStructuringElement(MORPH_RECT, Size(erodVal1,erodVal2), Point(-1,-1));
-            Mat kernel2 = getStructuringElement(MORPH_RECT, Size(dilVal1,dilVal2), Point(-1,-1));
-        }if(erodSize == 1 && dilSize == 1){
-             erodVal1 = 5; erodVal2 = 5;
-             dilVal1 = 5; dilVal2 = 5;
-            Mat kernel = getStructuringElement(MORPH_RECT, Size(erodVal1,erodVal2), Point(-1,-1));
-            Mat kernel2 = getStructuringElement(MORPH_RECT, Size(dilVal1,dilVal2), Point(-1,-1));
-        }if(erodSize == 2 && dilSize ==2){
-             erodVal1 = 10; erodVal2 = 10;
-             dilVal1 = 10; dilVal2 = 10;
-            Mat kernel = getStructuringElement(MORPH_RECT, Size(erodVal1,erodVal2), Point(-1,-1));
-            Mat kernel2 = getStructuringElement(MORPH_RECT, Size(dilVal1,dilVal2), Point(-1,-1));
-        }*/
-    //createTrackbar("Hue min hijau", windowname, &hmin2, 180);
-    //createTrackbar("Sat min hijau", windowname, &smin2, 255);
-    //createTrackbar("Val min hijau", windowname, &vmin2, 255);
+    namedWindow(mainwindow);
+    createTrackbar("Hue",mainwindow, &hmin, max_value1);
+    createTrackbar("Saturation", mainwindow, &smin, max_value2);
+    createTrackbar("Value", mainwindow, &vmin, max_value2);
+    createTrackbar("Erode", mainwindow, &erodSize, max_value3);
+    createTrackbar("Dilate", mainwindow, &dilSize, max_value3);
 
     while(true){
+        
         cap.read(img);
         cvtColor(img, imgHSV, COLOR_BGR2HSV);
-        cvtColor(img, imgHSV2, COLOR_BGR2HSV);
 
-        inRange(imgHSV, Scalar(hmin1,smin1,vmin1), Scalar(hmax1,smax1,vmax1), mask);
-        //inRange(imgHSV2, Scalar(hmin2,smin2,vmin2), Scalar(hmax2,smax2,vmax2), mask2);
+        inRange(imgHSV, Scalar(hmin,smin,vmin), Scalar(max_value1,max_value2,max_value2), mask);
+
         Mat kernel = getStructuringElement(MORPH_RECT, Size(erodSize+1, erodSize+1), Point(-1,-1));
         Mat kernel2 = getStructuringElement(MORPH_RECT, Size(dilSize+1,dilSize+1), Point(-1,-1));
+
+        //erode dilate blue color
         erode(mask, imgErode, kernel, Point(-1,-1),1);
         dilate(imgErode, imgDil, kernel2, Point(-1,-1),1);
 
-        vector <vector<Point>> contours;
-            findContours(imgDil, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+        vector<vector<Point>> contours;
+        findContours(imgDil, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
         if(contours.size()!= 0){
                 sort(contours.begin(), contours.end(), compareContourAreas);
-                Rect boundRect = boundingRect(contours[contours.size()-1]);
-            if(boundRect.area() > 3000){
-                rectangle(img, boundRect.tl(), boundRect.br(), Scalar(0,0,255), 3);
-                if(boundRect.x < x && boundRect.x + boundRect.width > x){
-                    if(boundRect.y < y && boundRect.y + boundRect.height > y){
+                Rect br = boundingRect(contours[contours.size()-1]);
+            if(br.area() > 1000){
+                rectangle(img, br.tl(), br.br(), Scalar(0,0,255), 3);
+                    if(br.x < x && br.x + br.width > x){
+                        if(br.y < y && br.y + br.height > y){
                         error = 0;
                     }
-                }else{
-                    float midx = (2.0*boundRect.x + boundRect.width) / 2.0;
-                    float midy = (2.0*boundRect.y + boundRect.height) / 2.0;
+                        }else{
+                    float midx = (2.0*br.x + br.width) / 2.0;
+                    float midy = (2.0*br.y + br.height) / 2.0;
                     error = sqrt(pow((midx-x), 2)+pow((midy-y),2));
                 }
             char str[200];
             char str2[200];
             sprintf(str, "error = %.2f", error);
-            sprintf(str2, "x, y = (%.2f, %.2f)", (float)boundRect.x, (float)boundRect.y);
-            putText(img, str, Point2f(100,50), FONT_HERSHEY_TRIPLEX, 2, Scalar(0,0,0));
-            putText(img, str2, Point2f(100,100), FONT_HERSHEY_TRIPLEX, 2, Scalar(0,0,0));
+            sprintf(str2, "x, y = (%.2f, %.2f)", (float)br.x, (float)br.y);
+            putText(img, str, Point2f(100,50), FONT_HERSHEY_TRIPLEX, 1, Scalar(0,0,255));
+            putText(img, str2, Point2f(100,100), FONT_HERSHEY_TRIPLEX, 1, Scalar(0,0,0));
             }
         }
-    
-        imshow(windowname, img);
-        imshow(videoname1, mask);
-        imshow(videoname3, imgDil);
-        imshow(videoname4, imgErode);
+        imshow(mainwindow, img);
+        imshow(window2, mask);
+        imshow(window3, imgDil);
+        imshow(window4, imgErode);
 
-        waitKey(1);
-
-
-        cap >> frame;
-        if(frame.empty()) break;
+        cap >> img;
+        if(img.empty()) break;
         if(waitKey(10) == 27) break;
-        contours.clear();
     }
 
     return 0;
