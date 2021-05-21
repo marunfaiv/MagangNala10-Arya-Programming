@@ -1,0 +1,3 @@
+/home/arya/Barunastra/CMakeFiles/rebuild_cache.dir
+/home/arya/Barunastra/CMakeFiles/edit_cache.dir
+/home/arya/Barunastra/CMakeFiles/main_prog.dir
