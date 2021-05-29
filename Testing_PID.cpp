@@ -8,6 +8,7 @@ using namespace std;
     int e_accum = 0;
     int Kp=10,Ki=5,Kd=2;
     int output;
+    float integral, derivative;
 
 int sumAv(int arr[]){
     int sum;
@@ -26,10 +27,12 @@ int main(){
 
 
     while(true){
-        int val = rand();
+        int val = 10;
         inputError(err, val);
-        e_accum = sumAv(err);
-        output = Kp*err[0] + Ki*e_accum + Kd*err[1];
+        
+        integral = sumAv(err);
+        derivative = err[0] - err[1];
+        output = Kp*err[0] + Ki*integral + Kd*derivative;
         cout << output << endl; // check nilai output
     }
 
