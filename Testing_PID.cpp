@@ -5,10 +5,9 @@
 using namespace std;
 
     int err[3] = {0};
-    int e_accum = 0;
     int Kp=10,Ki=5,Kd=2;
     int output;
-    float integral, derivative;
+    float integral = 0, derivative = 0;
 
 int sumAv(int arr[]){
     int sum;
